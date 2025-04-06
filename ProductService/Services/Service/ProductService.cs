@@ -39,7 +39,7 @@ namespace ProductService.Services.Service
             return products.Select(p => MapToProductDto(p));
         }
 
-        public async Task<ProductDto> GetProductByIdAsync(int id)
+        public async Task<ProductDto?> GetProductByIdAsync(int id)
         {
             var product = await _productRepository.GetProductByIdAsync(id);
             return product != null ? MapToProductDto(product) : null;
@@ -122,7 +122,7 @@ namespace ProductService.Services.Service
             return MapToProductDto(existingProduct);
         }
 
-        public async Task DeleteProductAsync(int id, string sellerId)
+        public async Task DeleteProductAsync(int id, string? sellerId)
         {
             var existingProduct = await _productRepository.GetProductByIdAsync(id);
             if (existingProduct == null)

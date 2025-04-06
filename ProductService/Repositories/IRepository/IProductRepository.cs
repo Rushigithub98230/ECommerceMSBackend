@@ -7,7 +7,7 @@ namespace ProductService.Repositories.IRepository
         Task<IEnumerable<Product>> GetAllProductsAsync();
         Task<IEnumerable<Product>> GetProductsByCategoryAsync(int categoryId);
         Task<IEnumerable<Product>> GetProductsBySellerAsync(string sellerId);
-        Task<Product> GetProductByIdAsync(int id);
+        Task<Product?> GetProductByIdAsync(int id);
         Task<bool> ProductExistsAsync(int id);
         Task<bool> IsInStockAsync(int id, int quantity);
         Task<bool> DecrementStockAsync(int id, int quantity);

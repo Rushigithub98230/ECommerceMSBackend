@@ -53,7 +53,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     [HttpGet("seller")]
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetSellerProducts()
     {
@@ -62,7 +62,7 @@ public class ProductsController : ControllerBase
         return Ok(products);
     }
 
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     [HttpPost]
     public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto productDto)
     {
@@ -78,7 +78,7 @@ public class ProductsController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateProduct(int id, UpdateProductDto productDto)
     {
@@ -98,7 +98,7 @@ public class ProductsController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteProduct(int id)
     {

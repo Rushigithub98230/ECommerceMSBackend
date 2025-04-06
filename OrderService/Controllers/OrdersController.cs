@@ -21,7 +21,7 @@ public class OrdersController : ControllerBase
         _logger = logger;
     }
 
-    [Authorize(Roles = "Admin,Seller")]
+    [Authorize(Roles = "admin,seller")]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders()
     {
@@ -52,7 +52,7 @@ public class OrdersController : ControllerBase
         var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var userRole = User.FindFirstValue(ClaimTypes.Role);
 
-        if (userRole != "Admin" && userRole != "Seller" && order.CustomerId != customerId)
+        if (userRole != "admin" && userRole != "seller" && order.CustomerId != customerId)
         {
             return Forbid();
         }
@@ -60,7 +60,7 @@ public class OrdersController : ControllerBase
         return Ok(order);
     }
 
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "customer")]
     [HttpPost]
     public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto orderDto)
     {
@@ -80,7 +80,7 @@ public class OrdersController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     [HttpPut("{id}/status")]
     public async Task<IActionResult> UpdateOrderStatus(int id, UpdateOrderStatusDto statusDto)
     {
@@ -95,7 +95,7 @@ public class OrdersController : ControllerBase
         }
     }
 
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "customer")]
     [HttpPost("{id}/cancel")]
     public async Task<IActionResult> CancelOrder(int id)
     {
