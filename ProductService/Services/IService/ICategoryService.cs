@@ -1,13 +1,14 @@
-﻿using ProductService.DTos;
+﻿using EComMSSharedLibrary.Models;
+using ProductService.DTos;
 
 namespace ProductService.Services.IService
 {
     public interface ICategoryService
     {
-        Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync();
-        Task<CategoryDto> GetCategoryByIdAsync(int id);
-        Task<CategoryDto> AddCategoryAsync(CreateCategoryDto categoryDto);
-        Task<CategoryDto> UpdateCategoryAsync(int id, UpdateCategoryDto categoryDto);
-        Task DeleteCategoryAsync(int id);
+        Task<ApiResponse<CategoryDto>> GetByIdAsync(Guid id);
+        Task<ApiResponse<IEnumerable<CategoryDto>>> GetAllAsync();
+        Task<ApiResponse<CategoryDto>> CreateAsync(CreateCategoryDto categoryDto);
+        Task<ApiResponse<CategoryDto>> UpdateAsync(Guid id, UpdateCategoryDto categoryDto);
+        Task<ApiResponse<bool>> DeleteAsync(Guid id);
     }
 }

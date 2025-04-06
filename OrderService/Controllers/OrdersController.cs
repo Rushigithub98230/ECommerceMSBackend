@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Dtos;
-using OrderService.Services.IService;
+using OrderService.Services;
 using System.Security.Claims;
 
 namespace OrderService.Controllers;
@@ -11,111 +11,53 @@ namespace OrderService.Controllers;
 public class OrdersController : ControllerBase
 {
     private readonly IOrderService _orderService;
-    private readonly ILogger<OrdersController> _logger;
 
-    public OrdersController(
-        IOrderService orderService,
-        ILogger<OrdersController> logger)
+    public OrdersController(IOrderService orderService)
     {
         _orderService = orderService;
-        _logger = logger;
     }
 
-    [Authorize(Roles = "admin,seller")]
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders()
-    {
-        var orders = await _orderService.GetAllOrdersAsync();
-        return Ok(orders);
-    }
-
-    [Authorize]
-    [HttpGet("customer")]
-    public async Task<ActionResult<IEnumerable<OrderDto>>> GetCustomerOrders()
-    {
-        var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var orders = await _orderService.GetOrdersByCustomerAsync(customerId);
-        return Ok(orders);
-    }
-
-    [Authorize]
     [HttpGet("{id}")]
-    public async Task<ActionResult<OrderDto>> GetOrder(int id)
+    [Authorize]
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var order = await _orderService.GetOrderByIdAsync(id);
-        if (order == null)
-        {
-            return NotFound();
-        }
-
-        // If not admin or seller, check if the order belongs to the current user
-        var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var userRole = User.FindFirstValue(ClaimTypes.Role);
-
-        if (userRole != "admin" && userRole != "seller" && order.CustomerId != customerId)
-        {
-            return Forbid();
-        }
-
-        return Ok(order);
+        var response = await _orderService.GetByIdAsync(id);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [Authorize(Roles = "customer")]
+    [HttpGet("customer")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> GetByCustomerId()
+    {
+        var customerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var response = await _orderService.GetByCustomerIdAsync(customerId);
+        return StatusCode(response.StatusCode, response);
+    }
+
+    [HttpGet("seller")]
+    [Authorize(Roles = "Seller")]
+    public async Task<IActionResult> GetBySellerId()
+    {
+        var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var response = await _orderService.GetBySellerIdAsync(sellerId);
+        return StatusCode(response.StatusCode, response);
+    }
+
     [HttpPost]
-    public async Task<ActionResult<OrderDto>> CreateOrder(CreateOrderDto orderDto)
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> Create([FromBody] CreateOrderDto orderDto)
     {
-        try
-        {
-            var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var order = await _orderService.CreateOrderAsync(orderDto, customerId);
-            return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, order);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var customerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var response = await _orderService.CreateAsync(customerId, orderDto);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [Authorize(Roles = "seller,admin")]
     [HttpPut("{id}/status")]
-    public async Task<IActionResult> UpdateOrderStatus(int id, UpdateOrderStatusDto statusDto)
+    [Authorize(Roles = "Seller,Admin")]
+    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusDto updateStatusDto)
     {
-        try
-        {
-            var order = await _orderService.UpdateOrderStatusAsync(id, statusDto);
-            return Ok(order);
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(ex.Message);
-        }
-    }
-
-    [Authorize(Roles = "customer")]
-    [HttpPost("{id}/cancel")]
-    public async Task<IActionResult> CancelOrder(int id)
-    {
-        try
-        {
-            var customerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var result = await _orderService.CancelOrderAsync(id, customerId);
-            return Ok(new { success = result });
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var response = await _orderService.UpdateStatusAsync(id, updateStatusDto);
+        return StatusCode(response.StatusCode, response);
     }
 }
+

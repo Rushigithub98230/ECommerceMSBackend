@@ -7,6 +7,7 @@ namespace ProductService.Data
 {
     public class ProductDbContext : DbContext
     {
+
         public ProductDbContext(DbContextOptions<ProductDbContext> options) : base(options)
         {
         }
@@ -16,24 +17,27 @@ namespace ProductService.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
+           
+            modelBuilder.Entity<Product>()
+                .Property(p => p.Price)
+                .HasColumnType("decimal(18,2)");
 
-            // Configure relationships
+            modelBuilder.Entity<Product>()
+                .Property(p => p.ImageUrls)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Add indexes
-            modelBuilder.Entity<Product>()
-                .HasIndex(p => p.Name);
-
-            modelBuilder.Entity<Product>()
-                .HasIndex(p => p.CategoryId);
-
-            modelBuilder.Entity<Product>()
-                .HasIndex(p => p.SellerId);
+            
+            modelBuilder.Entity<Category>()
+                .HasIndex(c => c.Name)
+                .IsUnique();
         }
     }
 }

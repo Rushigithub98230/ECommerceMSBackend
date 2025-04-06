@@ -1,6 +1,7 @@
-﻿using ProductService.DTos;
+﻿using EComMSSharedLibrary.Models;
+using ProductService.Data.DataAccessRepositories.categoryRepositories;
+using ProductService.DTos;
 using ProductService.Models;
-using ProductService.Repositories.IRepository;
 using ProductService.Services.IService;
 
 namespace ProductService.Services.Service
@@ -8,84 +9,69 @@ namespace ProductService.Services.Service
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _categoryRepository;
-        private readonly ILogger<CategoryService> _logger;
 
-        public CategoryService(
-            ICategoryRepository categoryRepository,
-            ILogger<CategoryService> logger)
+        public CategoryService(ICategoryRepository categoryRepository)
         {
             _categoryRepository = categoryRepository;
-            _logger = logger;
         }
 
-        public async Task<IEnumerable<CategoryDto>> GetAllCategoriesAsync()
+        public async Task<ApiResponse<CategoryDto>> GetByIdAsync(Guid id)
         {
-            var categories = await _categoryRepository.GetAllCategoriesAsync();
-            return categories.Select(c => MapToCategoryDto(c));
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null || !category.IsActive)
+                return ApiResponse<CategoryDto>.ErrorResponse("Category not found", 404);
+
+            return ApiResponse<CategoryDto>.SuccessResponse(MapToDto(category));
         }
 
-        public async Task<CategoryDto> GetCategoryByIdAsync(int id)
+        public async Task<ApiResponse<IEnumerable<CategoryDto>>> GetAllAsync()
         {
-            var category = await _categoryRepository.GetCategoryByIdAsync(id);
-            return category != null ? MapToCategoryDto(category) : null;
+            var categories = await _categoryRepository.GetAllAsync();
+            var categoryDtos = categories.Select(MapToDto);
+            return ApiResponse<IEnumerable<CategoryDto>>.SuccessResponse(categoryDtos);
         }
 
-        public async Task<CategoryDto> AddCategoryAsync(CreateCategoryDto categoryDto)
+        public async Task<ApiResponse<CategoryDto>> CreateAsync(CreateCategoryDto categoryDto)
         {
             var category = new Category
             {
                 Name = categoryDto.Name,
-                Description = categoryDto.Description,
-                CreatedAt = DateTime.UtcNow
+                Description = categoryDto.Description
             };
 
-            await _categoryRepository.AddCategoryAsync(category);
-            _logger.LogInformation($"Category {category.Id} created");
-
-            return MapToCategoryDto(category);
+            var createdCategory = await _categoryRepository.CreateAsync(category);
+            return ApiResponse<CategoryDto>.SuccessResponse(MapToDto(createdCategory), "Category created successfully", 201);
         }
 
-        public async Task<CategoryDto> UpdateCategoryAsync(int id, UpdateCategoryDto categoryDto)
+        public async Task<ApiResponse<CategoryDto>> UpdateAsync(Guid id, UpdateCategoryDto categoryDto)
         {
-            var existingCategory = await _categoryRepository.GetCategoryByIdAsync(id);
-            if (existingCategory == null)
-            {
-                throw new ArgumentException($"Category with ID {id} not found");
-            }
+            var category = await _categoryRepository.GetByIdAsync(id);
+            if (category == null || !category.IsActive)
+                return ApiResponse<CategoryDto>.ErrorResponse("Category not found", 404);
 
-            // Update properties if provided
-            if (!string.IsNullOrEmpty(categoryDto.Name))
-                existingCategory.Name = categoryDto.Name;
+            category.Name = categoryDto.Name;
+            category.Description = categoryDto.Description;
 
-            if (!string.IsNullOrEmpty(categoryDto.Description))
-                existingCategory.Description = categoryDto.Description;
-
-            await _categoryRepository.UpdateCategoryAsync(existingCategory);
-            _logger.LogInformation($"Category {id} updated");
-
-            return MapToCategoryDto(existingCategory);
+            var updatedCategory = await _categoryRepository.UpdateAsync(category);
+            return ApiResponse<CategoryDto>.SuccessResponse(MapToDto(updatedCategory));
         }
 
-        public async Task DeleteCategoryAsync(int id)
+        public async Task<ApiResponse<bool>> DeleteAsync(Guid id)
         {
-            var existingCategory = await _categoryRepository.GetCategoryByIdAsync(id);
-            if (existingCategory == null)
-            {
-                throw new ArgumentException($"Category with ID {id} not found");
-            }
+            var result = await _categoryRepository.DeleteAsync(id);
+            if (!result)
+                return ApiResponse<bool>.ErrorResponse("Category not found", 404);
 
-            await _categoryRepository.DeleteCategoryAsync(id);
-            _logger.LogInformation($"Category {id} deleted");
+            return ApiResponse<bool>.SuccessResponse(true, "Category deleted successfully");
         }
 
-        private CategoryDto MapToCategoryDto(Category category)
+        private CategoryDto MapToDto(Category category)
         {
             return new CategoryDto
             {
                 Id = category.Id,
                 Name = category.Name,
-                Description = category.Description,
-                CreatedAt = category.CreatedAt
+                Description = category.Description
             };
         }
     }

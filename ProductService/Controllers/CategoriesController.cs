@@ -11,71 +11,50 @@ namespace ProductService.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
-        private readonly ILogger<CategoriesController> _logger;
 
-        public CategoriesController(
-            ICategoryService categoryService,
-            ILogger<CategoriesController> logger)
+        public CategoriesController(ICategoryService categoryService)
         {
             _categoryService = categoryService;
-            _logger = logger;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CategoryDto>>> GetCategories()
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAll()
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
-            return Ok(categories);
+            var response = await _categoryService.GetAllAsync();
+            return StatusCode(response.StatusCode, response);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<CategoryDto>> GetCategory(int id)
+        [AllowAnonymous]
+        public async Task<IActionResult> GetById(Guid id)
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
-            if (category == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(category);
+            var response = await _categoryService.GetByIdAsync(id);
+            return StatusCode(response.StatusCode, response);
         }
 
-        [Authorize(Roles = "admin")]
         [HttpPost]
-        public async Task<ActionResult<CategoryDto>> CreateCategory(CreateCategoryDto categoryDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create([FromBody] CreateCategoryDto categoryDto)
         {
-            var category = await _categoryService.AddCategoryAsync(categoryDto);
-            return CreatedAtAction(nameof(GetCategory), new { id = category.Id }, category);
+            var response = await _categoryService.CreateAsync(categoryDto);
+            return StatusCode(response.StatusCode, response);
         }
 
-        [Authorize(Roles = "admin")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory(int id, UpdateCategoryDto categoryDto)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateCategoryDto categoryDto)
         {
-            try
-            {
-                var category = await _categoryService.UpdateCategoryAsync(id, categoryDto);
-                return Ok(category);
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            var response = await _categoryService.UpdateAsync(id, categoryDto);
+            return StatusCode(response.StatusCode, response);
         }
 
-        [Authorize(Roles = "admin")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(Guid id)
         {
-            try
-            {
-                await _categoryService.DeleteCategoryAsync(id);
-                return NoContent();
-            }
-            catch (ArgumentException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            var response = await _categoryService.DeleteAsync(id);
+            return StatusCode(response.StatusCode, response);
         }
     }
 }

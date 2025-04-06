@@ -1,12 +1,13 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using EComMSSharedLibrary.Extensions;
+using FluentValidation.AspNetCore;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using OrderService.Data.Context;
-using OrderService.Data.Repositories.IRepository;
-using OrderService.Data.Repositories.Repository;
-using OrderService.Messaging;
-using OrderService.Services.IService;
+using OrderService.Data.DataAccessRepositories;
+using OrderService.Services;
+using OrderService.Validators;
 using System.Text;
+using OrderService.Services.ProductService;
+using OrderService.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,26 +19,17 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-// Register repositories and services
+// Repositories
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IOrderService, OrderService.Services.Service.OrderService>();
-builder.Services.AddScoped<IOrderItemRepository, OrderItemRepository>();
 
-// Configure RabbitMQ
-//builder.Services.AddSingleton<IRabbitMQService, RabbitMQService>(sp =>
-//{
-//    var configuration = sp.GetRequiredService<IConfiguration>();
-//    var hostName = configuration["RabbitMQ:HostName"];
-//    var userName = configuration["RabbitMQ:UserName"];
-//    var password = configuration["RabbitMQ:Password"];
-//    return new RabbitMQService(hostName, userName, password);
-//});
+// Services
+builder.Services.AddScoped<IOrderService, OrderService.Services.OrderService>();
+builder.Services.AddHttpClient<IProductService, ProductService>();
+//builder.Services.AddScoped<INotificationService, NotificationService>();
 
-// Register HttpClient for Product Service
-builder.Services.AddHttpClient("ProductService", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ServiceUrls:ProductService"]);
-});
+// Validation
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderDtoValidator>();
 
 // Configure JWT Authentication
 builder.Services.AddDbContext<OrderDbContext>(options =>
@@ -46,34 +38,10 @@ options.UseSqlServer(
         Configuration.GetConnectionString("DefaultConnection")));
 
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+builder.Services.AddJwtAuthentication(builder.Configuration);
 
-}).AddJwtBearer(options =>
-{
 
-    var key = Encoding.UTF8.GetBytes(builder.Configuration.GetSection("Jwt:Key").Value!);
-    string issuer = builder.Configuration.GetSection("Jwt:Issuer").Value!;
-    string audience = builder.Configuration.GetSection("Jwt:Audience").Value!;
-
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        RequireExpirationTime = true,
-        ValidIssuer = issuer,
-        ValidAudience = audience,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ClockSkew = TimeSpan.Zero,
-    };
-});
+    
 
 // Add CORS policy
 builder.Services.AddCors(options =>
@@ -97,7 +65,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("CorsPolicy");
-
+app.UseGlobalExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -11,117 +11,84 @@ namespace ProductService.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
-    private readonly ILogger<ProductsController> _logger;
 
-    public ProductsController(
-        IProductService productService,
-        ILogger<ProductsController> logger)
+    public ProductsController(IProductService productService)
     {
         _productService = productService;
-        _logger = logger;
     }
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts([FromQuery] string search = null)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAll()
     {
-        if (!string.IsNullOrEmpty(search))
-        {
-            var searchResults = await _productService.SearchProductsAsync(search);
-            return Ok(searchResults);
-        }
-
-        var products = await _productService.GetAllProductsAsync();
-        return Ok(products);
+        var response = await _productService.GetAllAsync();
+        return StatusCode(response.StatusCode, response);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ProductDto>> GetProduct(int id)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetById(Guid id)
     {
-        var product = await _productService.GetProductByIdAsync(id);
-        if (product == null)
-        {
-            return NotFound();
-        }
+        var response = await _productService.GetByIdAsync(id);
+        return StatusCode(response.StatusCode, response);
+    }
 
-        return Ok(product);
+    [HttpGet("seller/{sellerId}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetBySellerId(Guid sellerId)
+    {
+        var response = await _productService.GetBySellerIdAsync(sellerId);
+        return StatusCode(response.StatusCode, response);
     }
 
     [HttpGet("category/{categoryId}")]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(int categoryId)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetByCategoryId(Guid categoryId)
     {
-        var products = await _productService.GetProductsByCategoryAsync(categoryId);
-        return Ok(products);
+        var response = await _productService.GetByCategoryIdAsync(categoryId);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [Authorize(Roles = "seller,admin")]
-    [HttpGet("seller")]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetSellerProducts()
-    {
-        var sellerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        var products = await _productService.GetProductsBySellerAsync(sellerId);
-        return Ok(products);
-    }
-
-    [Authorize(Roles = "seller,admin")]
     [HttpPost]
-    public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto productDto)
+    [Authorize(Roles = "Seller,Admin")]
+    public async Task<IActionResult> Create([FromBody] CreateProductDto productDto)
     {
-        try
-        {
-            var sellerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var product = await _productService.AddProductAsync(productDto, sellerId);
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, product);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(ex.Message);
-        }
+        var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var response = await _productService.CreateAsync(sellerId, productDto);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [Authorize(Roles = "seller,admin")]
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateProduct(int id, UpdateProductDto productDto)
+    [Authorize(Roles = "Seller,Admin")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto productDto)
     {
-        try
-        {
-            var sellerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var product = await _productService.UpdateProductAsync(id, productDto, sellerId);
-            return Ok(product);
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
+        var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var response = await _productService.UpdateAsync(id, sellerId, productDto);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [Authorize(Roles = "seller,admin")]
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteProduct(int id)
+    [Authorize(Roles = "Seller,Admin")]
+    public async Task<IActionResult> Delete(Guid id)
     {
-        try
-        {
-            var sellerId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            await _productService.DeleteProductAsync(id, sellerId);
-            return NoContent();
-        }
-        catch (ArgumentException ex)
-        {
-            return NotFound(ex.Message);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            return Forbid(ex.Message);
-        }
+        var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+        var response = await _productService.DeleteAsync(id, sellerId);
+        return StatusCode(response.StatusCode, response);
     }
 
-    [HttpGet("{id}/stock")]
-    public async Task<ActionResult<bool>> CheckStock(int id, [FromQuery] int quantity = 1)
+    [HttpPut("{id}/stock")]
+    [Authorize(Roles = "Seller,Admin")]
+    public async Task<IActionResult> UpdateStock(Guid id, [FromBody] UpdateStockDto updateStockDto)
     {
-        var isInStock = await _productService.IsInStockAsync(id, quantity);
-        return Ok(isInStock);
+        var response = await _productService.UpdateStockAsync(id, updateStockDto);
+        return StatusCode(response.StatusCode, response);
+    }
+
+    [HttpGet("{id}/stock/check")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CheckStockAvailability(Guid id, [FromQuery] int quantity)
+    {
+        var response = await _productService.CheckStockAvailabilityAsync(id, quantity);
+        return StatusCode(response.StatusCode, response);
     }
 }

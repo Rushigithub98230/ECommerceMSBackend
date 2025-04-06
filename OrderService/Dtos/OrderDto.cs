@@ -1,31 +1,49 @@
-﻿using OrderService.Models;
-
-namespace OrderService.Dtos
+﻿namespace OrderService.Dtos
 {
     public class OrderDto
     {
-        public int Id { get; set; }
-        public string CustomerId { get; set; }
-        public DateTime OrderDate { get; set; }
+        public Guid Id { get; set; }
+        public Guid CustomerId { get; set; }
         public decimal TotalAmount { get; set; }
         public string Status { get; set; }
+        public DateTime CreatedAt { get; set; }
         public string ShippingAddress { get; set; }
-        public string TrackingNumber { get; set; }
-        public DateTime? ShippedDate { get; set; }
-        public DateTime? DeliveredDate { get; set; }
-        public List<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
+        public string PaymentMethod { get; set; }
+        public List<OrderItemDto> Items { get; set; } = new List<OrderItemDto>();
     }
 
+    public class OrderItemDto
+    {
+        public Guid ProductId { get; set; }
+        public string ProductName { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; }
+        public Guid SellerId { get; set; }
+    }
 
     public class CreateOrderDto
     {
         public string ShippingAddress { get; set; }
-        public List<CreateOrderItemDto> OrderItems { get; set; } = new List<CreateOrderItemDto>();
+        public List<CreateOrderItemDto> Items { get; set; } = new List<CreateOrderItemDto>();
+    }
+
+    public class CreateOrderItemDto
+    {
+        public Guid ProductId { get; set; }
+        public int Quantity { get; set; }
     }
 
     public class UpdateOrderStatusDto
     {
-        public OrderStatus Status { get; set; }
-        public string TrackingNumber { get; set; }
+        public string Status { get; set; }
+    }
+
+    public class ProductDto
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public decimal Price { get; set; }
+        public int StockQuantity { get; set; }
+        public Guid SellerId { get; set; }
     }
 }

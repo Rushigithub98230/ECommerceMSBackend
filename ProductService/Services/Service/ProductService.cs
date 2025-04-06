@@ -1,6 +1,9 @@
-﻿using ProductService.DTos;
+﻿using EComMSSharedLibrary.Models;
+using ProductService.Data.DataAccessRepositories.categoryRepositories;
+using ProductService.Data.DataAccessRepositories.ProductRepositories;
+using ProductService.DTos;
 using ProductService.Models;
-using ProductService.Repositories.IRepository;
+
 using ProductService.Services.IService;
 
 namespace ProductService.Services.Service
@@ -9,49 +12,53 @@ namespace ProductService.Services.Service
     {
         private readonly IProductRepository _productRepository;
         private readonly ICategoryRepository _categoryRepository;
-        private readonly ILogger<ProductService> _logger;
 
-        public ProductService(
-            IProductRepository productRepository,
-            ICategoryRepository categoryRepository,
-            ILogger<ProductService> logger)
+        public ProductService(IProductRepository productRepository, ICategoryRepository categoryRepository)
         {
             _productRepository = productRepository;
             _categoryRepository = categoryRepository;
-            _logger = logger;
         }
 
-        public async Task<IEnumerable<ProductDto>> GetAllProductsAsync()
+        public async Task<ApiResponse<ProductDto>> GetByIdAsync(Guid id)
         {
-            var products = await _productRepository.GetAllProductsAsync();
-            return products.Select(p => MapToProductDto(p));
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null || !product.IsActive)
+                return ApiResponse<ProductDto>.ErrorResponse("Product not found", 404);
+
+            return ApiResponse<ProductDto>.SuccessResponse(MapToDto(product));
         }
 
-        public async Task<IEnumerable<ProductDto>> GetProductsByCategoryAsync(int categoryId)
+        public async Task<ApiResponse<IEnumerable<ProductDto>>> GetAllAsync()
         {
-            var products = await _productRepository.GetProductsByCategoryAsync(categoryId);
-            return products.Select(p => MapToProductDto(p));
+            var products = await _productRepository.GetAllAsync();
+            var productDtos = products.Select(MapToDto);
+            return ApiResponse<IEnumerable<ProductDto>>.SuccessResponse(productDtos);
         }
 
-        public async Task<IEnumerable<ProductDto>> GetProductsBySellerAsync(string sellerId)
+        public async Task<ApiResponse<IEnumerable<ProductDto>>> GetBySellerIdAsync(Guid sellerId)
         {
-            var products = await _productRepository.GetProductsBySellerAsync(sellerId);
-            return products.Select(p => MapToProductDto(p));
+            var products = await _productRepository.GetBySellerIdAsync(sellerId);
+            var productDtos = products.Select(MapToDto);
+            return ApiResponse<IEnumerable<ProductDto>>.SuccessResponse(productDtos);
         }
 
-        public async Task<ProductDto?> GetProductByIdAsync(int id)
+        public async Task<ApiResponse<IEnumerable<ProductDto>>> GetByCategoryIdAsync(Guid categoryId)
         {
-            var product = await _productRepository.GetProductByIdAsync(id);
-            return product != null ? MapToProductDto(product) : null;
+            var categoryExists = await _categoryRepository.ExistsAsync(categoryId);
+            if (!categoryExists)
+                return ApiResponse<IEnumerable<ProductDto>>.ErrorResponse("Category not found", 404);
+
+            var products = await _productRepository.GetByCategoryIdAsync(categoryId);
+            var productDtos = products.Select(MapToDto);
+            return ApiResponse<IEnumerable<ProductDto>>.SuccessResponse(productDtos);
         }
 
-        public async Task<ProductDto> AddProductAsync(CreateProductDto productDto, string sellerId)
+        public async Task<ApiResponse<ProductDto>> CreateAsync(Guid sellerId, CreateProductDto productDto)
         {
-            var category = await _categoryRepository.GetCategoryByIdAsync(productDto.CategoryId);
-            if (category == null)
-            {
-                throw new ArgumentException($"Category with ID {productDto.CategoryId} not found");
-            }
+            // Verify category exists
+            var categoryExists = await _categoryRepository.ExistsAsync(productDto.CategoryId);
+            if (!categoryExists)
+                return ApiResponse<ProductDto>.ErrorResponse("Category not found", 404);
 
             var product = new Product
             {
@@ -59,103 +66,82 @@ namespace ProductService.Services.Service
                 Description = productDto.Description,
                 Price = productDto.Price,
                 StockQuantity = productDto.StockQuantity,
-                ImageUrl = productDto.ImageUrl,
-                CategoryId = productDto.CategoryId,
                 SellerId = sellerId,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
+                CategoryId = productDto.CategoryId,
+                ImageUrls = productDto.ImageUrls
             };
 
-            await _productRepository.AddProductAsync(product);
-            _logger.LogInformation($"Product {product.Id} created by seller {sellerId}");
+            var createdProduct = await _productRepository.CreateAsync(product);
 
-            return MapToProductDto(product);
+            // Fetch the complete product with category
+            var productWithCategory = await _productRepository.GetByIdAsync(createdProduct.Id);
+
+            return ApiResponse<ProductDto>.SuccessResponse(MapToDto(productWithCategory), "Product created successfully", 201);
         }
 
-        public async Task<ProductDto> UpdateProductAsync(int id, UpdateProductDto productDto, string sellerId)
+        public async Task<ApiResponse<ProductDto>> UpdateAsync(Guid id, Guid sellerId, UpdateProductDto productDto)
         {
-            var existingProduct = await _productRepository.GetProductByIdAsync(id);
-            if (existingProduct == null)
-            {
-                throw new ArgumentException($"Product with ID {id} not found");
-            }
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null || !product.IsActive)
+                return ApiResponse<ProductDto>.ErrorResponse("Product not found", 404);
 
-            if (existingProduct.SellerId != sellerId)
-            {
-                throw new UnauthorizedAccessException("You are not authorized to update this product");
-            }
+            if (product.SellerId != sellerId)
+                return ApiResponse<ProductDto>.ErrorResponse("You are not authorized to update this product", 403);
 
-            if (productDto.CategoryId.HasValue)
-            {
-                var category = await _categoryRepository.GetCategoryByIdAsync(productDto.CategoryId.Value);
-                if (category == null)
-                {
-                    throw new ArgumentException($"Category with ID {productDto.CategoryId} not found");
-                }
-                existingProduct.CategoryId = productDto.CategoryId.Value;
-            }
+            // Verify category exists
+            var categoryExists = await _categoryRepository.ExistsAsync(productDto.CategoryId);
+            if (!categoryExists)
+                return ApiResponse<ProductDto>.ErrorResponse("Category not found", 404);
 
-            // Update properties if provided
-            if (!string.IsNullOrEmpty(productDto.Name))
-                existingProduct.Name = productDto.Name;
+            product.Name = productDto.Name;
+            product.Description = productDto.Description;
+            product.Price = productDto.Price;
+            product.StockQuantity = productDto.StockQuantity;
+            product.CategoryId = productDto.CategoryId;
+            product.ImageUrls = productDto.ImageUrls;
 
-            if (!string.IsNullOrEmpty(productDto.Description))
-                existingProduct.Description = productDto.Description;
+            var updatedProduct = await _productRepository.UpdateAsync(product);
 
-            if (productDto.Price.HasValue)
-                existingProduct.Price = productDto.Price.Value;
+            
+            var productWithCategory = await _productRepository.GetByIdAsync(updatedProduct.Id);
 
-            if (productDto.StockQuantity.HasValue)
-                existingProduct.StockQuantity = productDto.StockQuantity.Value;
-
-            if (!string.IsNullOrEmpty(productDto.ImageUrl))
-                existingProduct.ImageUrl = productDto.ImageUrl;
-
-            if (productDto.IsActive.HasValue)
-                existingProduct.IsActive = productDto.IsActive.Value;
-
-            existingProduct.UpdatedAt = DateTime.UtcNow;
-
-            await _productRepository.UpdateProductAsync(existingProduct);
-            _logger.LogInformation($"Product {id} updated by seller {sellerId}");
-
-            return MapToProductDto(existingProduct);
+            return ApiResponse<ProductDto>.SuccessResponse(MapToDto(productWithCategory));
         }
 
-        public async Task DeleteProductAsync(int id, string? sellerId)
+        public async Task<ApiResponse<bool>> DeleteAsync(Guid id, Guid sellerId)
         {
-            var existingProduct = await _productRepository.GetProductByIdAsync(id);
-            if (existingProduct == null)
-            {
-                throw new ArgumentException($"Product with ID {id} not found");
-            }
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null || !product.IsActive)
+                return ApiResponse<bool>.ErrorResponse("Product not found", 404);
 
-            if (existingProduct.SellerId != sellerId)
-            {
-                throw new UnauthorizedAccessException("You are not authorized to delete this product");
-            }
+            if (product.SellerId != sellerId)
+                return ApiResponse<bool>.ErrorResponse("You are not authorized to delete this product", 403);
 
-            await _productRepository.DeleteProductAsync(id);
-            _logger.LogInformation($"Product {id} deleted by seller {sellerId}");
+            var result = await _productRepository.DeleteAsync(id);
+            return ApiResponse<bool>.SuccessResponse(result, "Product deleted successfully");
         }
 
-        public async Task<bool> IsInStockAsync(int id, int quantity)
+        public async Task<ApiResponse<bool>> UpdateStockAsync(Guid id, UpdateStockDto updateStockDto)
         {
-            return await _productRepository.IsInStockAsync(id, quantity);
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null || !product.IsActive)
+                return ApiResponse<bool>.ErrorResponse("Product not found", 404);
+
+            var result = await _productRepository.UpdateStockAsync(id, updateStockDto.Quantity);
+            return ApiResponse<bool>.SuccessResponse(result, "Stock updated successfully");
         }
 
-        public async Task<bool> DecrementStockAsync(int id, int quantity)
+        public async Task<ApiResponse<bool>> CheckStockAvailabilityAsync(Guid id, int quantity)
         {
-            return await _productRepository.DecrementStockAsync(id, quantity);
+            var product = await _productRepository.GetByIdAsync(id);
+            if (product == null || !product.IsActive)
+                return ApiResponse<bool>.ErrorResponse("Product not found", 404);
+
+            var isAvailable = product.StockQuantity >= quantity;
+            return ApiResponse<bool>.SuccessResponse(isAvailable);
         }
 
-        public async Task<IEnumerable<ProductDto>> SearchProductsAsync(string searchTerm)
-        {
-            var products = await _productRepository.SearchProductsAsync(searchTerm);
-            return products.Select(p => MapToProductDto(p));
-        }
-
-        private ProductDto MapToProductDto(Product product)
+        private ProductDto MapToDto(Product product)
         {
             return new ProductDto
             {
@@ -164,13 +150,10 @@ namespace ProductService.Services.Service
                 Description = product.Description,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
-                ImageUrl = product.ImageUrl,
-                IsActive = product.IsActive,
+                SellerId = product.SellerId,
                 CategoryId = product.CategoryId,
                 CategoryName = product.Category?.Name,
-                SellerId = product.SellerId,
-                CreatedAt = product.CreatedAt,
-                UpdatedAt = product.UpdatedAt
+                ImageUrls = product.ImageUrls
             };
         }
     }

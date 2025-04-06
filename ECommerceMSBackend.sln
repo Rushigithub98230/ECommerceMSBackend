@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderService", "OrderServic
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EComMSSharedLibrary", "EComMSSharedLibrary\EComMSSharedLibrary.csproj", "{69268FB4-C522-49CB-A3F6-5119BE2D22E6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NotificationService", "NotificationService\NotificationService.csproj", "{64C6D50E-6BB9-498B-AB2C-B0B19DE20453}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{69268FB4-C522-49CB-A3F6-5119BE2D22E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69268FB4-C522-49CB-A3F6-5119BE2D22E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69268FB4-C522-49CB-A3F6-5119BE2D22E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64C6D50E-6BB9-498B-AB2C-B0B19DE20453}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64C6D50E-6BB9-498B-AB2C-B0B19DE20453}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64C6D50E-6BB9-498B-AB2C-B0B19DE20453}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64C6D50E-6BB9-498B-AB2C-B0B19DE20453}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
