@@ -18,12 +18,6 @@ namespace OrderService.Models
         public List<OrderItem> Items { get; set; } = new List<OrderItem>();
     }
 
-    public enum OrderStatus
-    {
-        Processing = 0,
-        Shipped = 1,
-        Delivered = 2,
-        Cancelled = 3
-    }
+    
 
 }

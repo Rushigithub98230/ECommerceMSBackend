@@ -77,7 +77,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id}/stock")]
-    [Authorize(Roles = "seller,admin")]
+    [Authorize(Roles = "seller,admin,service")]
     public async Task<IActionResult> UpdateStock(Guid id, [FromBody] UpdateStockDto updateStockDto)
     {
         var response = await _productService.UpdateStockAsync(id, updateStockDto);

@@ -21,15 +21,15 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// Repositories
+
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 
-// Services
+
 builder.Services.AddScoped<IProductService, ProductService.Services.Service.ProductService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
-// Validation
+
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateProductDtoValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateCategoryDtoValidator>();
@@ -43,7 +43,7 @@ options.UseSqlServer(
 
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
-// Add CORS policy
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",

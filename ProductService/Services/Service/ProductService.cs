@@ -55,7 +55,7 @@ namespace ProductService.Services.Service
 
         public async Task<ApiResponse<ProductDto>> CreateAsync(Guid sellerId, CreateProductDto productDto)
         {
-            // Verify category exists
+            
             var categoryExists = await _categoryRepository.ExistsAsync(productDto.CategoryId);
             if (!categoryExists)
                 return ApiResponse<ProductDto>.ErrorResponse("Category not found", 404);
@@ -73,7 +73,7 @@ namespace ProductService.Services.Service
 
             var createdProduct = await _productRepository.CreateAsync(product);
 
-            // Fetch the complete product with category
+            
             var productWithCategory = await _productRepository.GetByIdAsync(createdProduct.Id);
 
             return ApiResponse<ProductDto>.SuccessResponse(MapToDto(productWithCategory), "Product created successfully", 201);
@@ -88,7 +88,7 @@ namespace ProductService.Services.Service
             if (product.SellerId != sellerId)
                 return ApiResponse<ProductDto>.ErrorResponse("You are not authorized to update this product", 403);
 
-            // Verify category exists
+            
             var categoryExists = await _categoryRepository.ExistsAsync(productDto.CategoryId);
             if (!categoryExists)
                 return ApiResponse<ProductDto>.ErrorResponse("Category not found", 404);

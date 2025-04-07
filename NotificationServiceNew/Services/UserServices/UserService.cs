@@ -21,11 +21,11 @@ namespace NotificationServiceNew.Services.UserServices
 
         private async Task EnsureAuthenticated()
         {
-            // Check if token is expired or not set
+           
             if (string.IsNullOrEmpty(_authToken) || DateTime.UtcNow >= _tokenExpiry)
             {
-                // Get a new token
-                var response = await _httpClient.PostAsJsonAsync("api/Auth/service-token", new
+               
+                var response = await _httpClient.PostAsJsonAsync("api/Users/service-token", new
                 {
                     ServiceKey = _configuration["ServiceAuth:Key"]
                 });
@@ -34,9 +34,9 @@ namespace NotificationServiceNew.Services.UserServices
                 {
                     var result = await response.Content.ReadFromJsonAsync<ServiceTokenResponse>();
                     _authToken = result.Token;
-                    _tokenExpiry = DateTime.UtcNow.AddDays(29); // Set expiry a bit before the actual expiry
+                    _tokenExpiry = DateTime.UtcNow.AddDays(29); 
 
-                    // Set the default authorization header for all requests
+                    
                     _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _authToken);
                 }
                 else

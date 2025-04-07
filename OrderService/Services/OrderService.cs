@@ -48,25 +48,25 @@ namespace OrderService.Services
 
         public async Task<ApiResponse<OrderDto>> CreateAsync(Guid customerId, CreateOrderDto orderDto)
         {
-            // Validate and get product details
+           
             var orderItems = new List<OrderItem>();
             decimal totalAmount = 0;
 
             foreach (var item in orderDto.Items)
             {
-                // Check stock availability
+               
                 var stockResponse = await _productService.CheckStockAvailabilityAsync(item.ProductId, item.Quantity);
                 if (!stockResponse.Success || !stockResponse.Data)
                     return ApiResponse<OrderDto>.ErrorResponse($"Product {item.ProductId} is out of stock or has insufficient quantity", 400);
 
-                // Get product details
+               
                 var productResponse = await _productService.GetProductAsync(item.ProductId);
                 if (!productResponse.Success)
                     return ApiResponse<OrderDto>.ErrorResponse($"Failed to get product details for {item.ProductId}", 400);
 
                 var product = productResponse.Data;
 
-                // Create order item
+               
                 var orderItem = new OrderItem
                 {
                     ProductId = product.Id,
@@ -80,7 +80,7 @@ namespace OrderService.Services
                 totalAmount += product.Price * item.Quantity;
             }
 
-            // Create order
+           
             var order = new Order
             {
                 CustomerId = customerId,
@@ -92,13 +92,13 @@ namespace OrderService.Services
 
             var createdOrder = await _orderRepository.CreateAsync(order);
 
-            // Update product stock
+            
             foreach (var item in orderItems)
             {
                 await _productService.DeductStockAsync(item.ProductId, item.Quantity);
             }
 
-            // Send notification
+          
             await _notificationService.SendOrderCreatedNotificationAsync(createdOrder);
 
             return ApiResponse<OrderDto>.SuccessResponse(MapToDto(createdOrder), "Order created successfully", 201);
@@ -112,7 +112,7 @@ namespace OrderService.Services
 
             var updatedOrder = await _orderRepository.UpdateStatusAsync(id, updateStatusDto.Status);
 
-            // Send notification for status change
+            
             await _notificationService.SendOrderStatusChangedNotificationAsync(updatedOrder);
 
             return ApiResponse<OrderDto>.SuccessResponse(MapToDto(updatedOrder), "Order status updated successfully");

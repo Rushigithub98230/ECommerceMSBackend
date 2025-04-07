@@ -32,7 +32,7 @@ namespace NotificationServiceNew.Services
         {
             try
             {
-                // Get customer details
+                
                 var customerResponse = await _userService.GetUserAsync(message.CustomerId);
                 if (!customerResponse.Success)
                 {
@@ -42,7 +42,7 @@ namespace NotificationServiceNew.Services
 
                 var customer = customerResponse.Data;
 
-                // Create email notification for customer
+                
                 var customerEmailContent = $"Dear {customer.FirstName},\n\n" +
                     $"Thank you for your order (#{message.OrderId}).\n" +
                     $"Your order has been received and is now being processed.\n\n" +
@@ -62,7 +62,7 @@ namespace NotificationServiceNew.Services
                 await _notificationRepository.CreateAsync(customerEmailNotification);
                 await _emailService.SendEmailAsync(customerEmailNotification);
 
-                // Create notifications for sellers
+                
                 var sellerIds = message.Items.Select(i => i.SellerId).Distinct();
                 foreach (var sellerId in sellerIds)
                 {
@@ -137,21 +137,7 @@ namespace NotificationServiceNew.Services
                 await _emailService.SendEmailAsync(customerEmailNotification);
 
                 
-                if (message.NewStatus == "Shipped")
-                {
-                    var smsContent = $"Your order #{message.OrderId} has been shipped and is on its way to you!";
-
-                    var smsNotification = new Notification
-                    {
-                        Type = "SMS",
-                        Recipient = customer.PhoneNumber,
-                        Subject = "Order Shipped",
-                        Content = smsContent
-                    };
-
-                    await _notificationRepository.CreateAsync(smsNotification);
-                    
-                }
+                
             }
             catch (Exception ex)
             {

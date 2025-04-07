@@ -28,7 +28,7 @@ namespace UserService.Validators
 
             RuleFor(x => x.Role)
                 .Must(role => role == "customer" || role == "seller" || role == "admin")
-                .WithMessage("Role must be either Customer, Seller, or Admin");
+                .WithMessage("Role must be either customer, seller, or admin");
         }
     }
 }

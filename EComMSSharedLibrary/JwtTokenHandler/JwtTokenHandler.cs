@@ -82,7 +82,7 @@ namespace EComMSSharedLibrary.JwtTokenHandler
             try
             {
                 var jwtSettings = _configuration.GetSection("JwtSettings");
-                var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT Secret Key is not configured");
+                var secretKey = jwtSettings["SecretKey"];
                 var issuer = jwtSettings["Issuer"] ?? "DefaultIssuer";
                 var audience = jwtSettings["Audience"] ?? "DefaultAudience";
 

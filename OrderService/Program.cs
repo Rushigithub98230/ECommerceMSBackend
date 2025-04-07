@@ -20,19 +20,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-// Repositories
+
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-// Services
+
 builder.Services.AddScoped<IOrderService, OrderService.Services.OrderService>();
 builder.Services.AddHttpClient<IProductService, ProductService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
-// Validation
+
 builder.Services.AddFluentValidationAutoValidation();
 builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderDtoValidator>();
 
-// Configure JWT Authentication
+
 builder.Services.AddDbContext<OrderDbContext>(options =>
 options.UseSqlServer(
         builder.
@@ -44,7 +44,7 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 
     
 
-// Add CORS policy
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("CorsPolicy",
@@ -56,7 +56,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

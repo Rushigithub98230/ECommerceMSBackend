@@ -40,7 +40,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [AllowAnonymous]
+    [Authorize]
     public async Task<IActionResult> GetById(Guid id)
     {
         var response = await _userService.GetByIdAsync(id);
@@ -67,7 +67,7 @@ public class UsersController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> GetServiceToken([FromBody] ServiceTokenRequest request)
     {
-        // Validate the service key
+      
         if (request.ServiceKey != _configuration["ServiceAuth:Key"])
         {
             return Unauthorized(new { message = "Invalid service key" });
