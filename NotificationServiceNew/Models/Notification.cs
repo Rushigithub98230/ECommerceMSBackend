@@ -1,4 +1,4 @@
-﻿namespace NotificationService.Models
+﻿namespace NotificationServiceNew.Models
 {
     public class Notification
     {

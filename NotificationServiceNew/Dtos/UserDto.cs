@@ -1,4 +1,4 @@
-﻿namespace NotificationService.Dtos
+﻿namespace NotificationServiceNew.Dtos
 {
     public class UserDto
     {

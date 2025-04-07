@@ -1,10 +1,10 @@
-﻿using NotificationService.Dtos;
-using NotificationService.Models;
-using NotificationService.Repositories;
-using NotificationService.Services.EmailServices;
-using NotificationService.Services.UserServices;
+﻿using NotificationServiceNew.Dtos;
+using NotificationServiceNew.Models;
+using NotificationServiceNew.Repositories;
+using NotificationServiceNew.Services.EmailServices;
+using NotificationServiceNew.Services.UserServices;
 
-namespace NotificationService.Services
+namespace NotificationServiceNew.Services
 {
     public class NotificationService : INotificationService
     {

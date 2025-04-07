@@ -1,6 +1,6 @@
-﻿using NotificationService.Models;
+﻿using NotificationServiceNew.Models;
 
-namespace NotificationService.Services.EmailServices
+namespace NotificationServiceNew.Services.EmailServices
 {
     public interface IEmailService
     {

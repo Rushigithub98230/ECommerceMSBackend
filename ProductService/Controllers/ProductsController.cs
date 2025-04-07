@@ -50,7 +50,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     public async Task<IActionResult> Create([FromBody] CreateProductDto productDto)
     {
         var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -59,7 +59,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateProductDto productDto)
     {
         var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -68,7 +68,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -77,7 +77,7 @@ public class ProductsController : ControllerBase
     }
 
     [HttpPut("{id}/stock")]
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     public async Task<IActionResult> UpdateStock(Guid id, [FromBody] UpdateStockDto updateStockDto)
     {
         var response = await _productService.UpdateStockAsync(id, updateStockDto);

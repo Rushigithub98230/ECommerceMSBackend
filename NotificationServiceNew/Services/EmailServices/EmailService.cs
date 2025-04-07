@@ -1,9 +1,9 @@
-﻿using NotificationService.Models;
-using NotificationService.Repositories;
+﻿using NotificationServiceNew.Models;
+using NotificationServiceNew.Repositories;
 using System.Net.Mail;
 using System.Net;
 
-namespace NotificationService.Services.EmailServices
+namespace NotificationServiceNew.Services.EmailServices
 {
     public class EmailService : IEmailService
     {

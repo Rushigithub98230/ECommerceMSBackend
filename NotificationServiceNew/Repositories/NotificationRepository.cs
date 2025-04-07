@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NotificationService.Data;
-using NotificationService.Models;
+using NotificationServiceNew.Data;
+using NotificationServiceNew.Models;
 
-namespace NotificationService.Repositories
+namespace NotificationServiceNew.Repositories
 {
     public class NotificationRepository : INotificationRepository
     {

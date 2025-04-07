@@ -8,6 +8,7 @@ using OrderService.Validators;
 using System.Text;
 using OrderService.Services.ProductService;
 using OrderService.Data;
+using OrderService.Services.NotificationService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +26,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 // Services
 builder.Services.AddScoped<IOrderService, OrderService.Services.OrderService>();
 builder.Services.AddHttpClient<IProductService, ProductService>();
-//builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // Validation
 builder.Services.AddFluentValidationAutoValidation();

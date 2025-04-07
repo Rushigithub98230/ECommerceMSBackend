@@ -26,7 +26,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("customer")]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "customer")]
     public async Task<IActionResult> GetByCustomerId()
     {
         var customerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -35,7 +35,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("seller")]
-    [Authorize(Roles = "Seller")]
+    [Authorize(Roles = "seller")]
     public async Task<IActionResult> GetBySellerId()
     {
         var sellerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -44,7 +44,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "customer")]
     public async Task<IActionResult> Create([FromBody] CreateOrderDto orderDto)
     {
         var customerId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
@@ -53,7 +53,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPut("{id}/status")]
-    [Authorize(Roles = "Seller,Admin")]
+    [Authorize(Roles = "seller,admin")]
     public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] UpdateOrderStatusDto updateStatusDto)
     {
         var response = await _orderService.UpdateStatusAsync(id, updateStatusDto);

@@ -19,7 +19,7 @@ namespace EComMSSharedLibrary.JwtTokenHandler
             _configuration = configuration;
         }
 
-        
+
         public string GenerateToken(string userId, string email, string role, IEnumerable<Claim>? additionalClaims = null)
         {
             var jwtSettings = _configuration.GetSection("JwtSettings");
@@ -54,8 +54,27 @@ namespace EComMSSharedLibrary.JwtTokenHandler
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+        public async Task<string> GenerateServiceToken()
+        {
+            var claims = new List<Claim>
+             {
+           new Claim(ClaimTypes.Name, "service-account"),
+        new Claim(ClaimTypes.Role, "service")
+    };
 
-        
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JwtSettings:Issuer"],
+                audience: _configuration["JwtSettings:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(30),
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
         public bool ValidateToken(string token, out ClaimsPrincipal? claimsPrincipal)
         {
             claimsPrincipal = null;

@@ -1,6 +1,8 @@
 ﻿using EComMSSharedLibrary.JwtTokenHandler;
 using EComMSSharedLibrary.Models;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using UserService.Data.DataAccessRepositories.IRepositories;
@@ -13,11 +15,13 @@ namespace UserService.Services.UserService
     {
         private readonly IUserRepository _userRepository;
         private readonly JwtTokenHandler _jwtHelper;
+        private readonly IConfiguration _configuration;
 
         public UserService(IUserRepository userRepository, IConfiguration configuration)
         {
             _userRepository = userRepository;
             _jwtHelper = new JwtTokenHandler(configuration);
+            _configuration = configuration;
         }
 
         public async Task<ApiResponse<UserDto>> GetByIdAsync(Guid id)
@@ -104,6 +108,27 @@ namespace UserService.Services.UserService
                 return ApiResponse<bool>.ErrorResponse("User not found", 404);
 
             return ApiResponse<bool>.SuccessResponse(true, "User deleted successfully");
+        }
+
+        public async Task<string> GenerateServiceToken()
+        {
+            var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.Name, "service-account"),
+        new Claim(ClaimTypes.Role, "Service")
+    };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["JwtSettings:Issuer"],
+                audience: _configuration["JwtSettings:Audience"],
+                claims: claims,
+                expires: DateTime.Now.AddDays(30), // Long-lived token for service
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
         private UserDto MapToDto(User user)

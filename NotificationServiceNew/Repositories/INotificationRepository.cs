@@ -1,6 +1,6 @@
-﻿using NotificationService.Models;
+﻿using NotificationServiceNew.Models;
 
-namespace NotificationService.Repositories
+namespace NotificationServiceNew.Repositories
 {
     public interface INotificationRepository
     {

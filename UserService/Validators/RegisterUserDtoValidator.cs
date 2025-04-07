@@ -27,7 +27,7 @@ namespace UserService.Validators
                 .MaximumLength(50).WithMessage("Last name cannot exceed 50 characters");
 
             RuleFor(x => x.Role)
-                .Must(role => role == "Customer" || role == "Seller" || role == "Admin")
+                .Must(role => role == "customer" || role == "seller" || role == "admin")
                 .WithMessage("Role must be either Customer, Seller, or Admin");
         }
     }

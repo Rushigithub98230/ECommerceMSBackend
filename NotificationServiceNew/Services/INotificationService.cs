@@ -1,6 +1,6 @@
-﻿using NotificationService.Dtos;
+﻿using NotificationServiceNew.Dtos;
 
-namespace NotificationService.Services
+namespace NotificationServiceNew.Services
 {
     public interface INotificationService
     {

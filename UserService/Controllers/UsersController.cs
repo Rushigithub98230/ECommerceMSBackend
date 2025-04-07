@@ -1,7 +1,10 @@
 
+using EComMSSharedLibrary.JwtTokenHandler;
+using EComMSSharedLibrary.Models;
 using Microsoft.AspNetCore.Authorization;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 using UserService.DTOs;
@@ -19,14 +22,17 @@ namespace UserService.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
-
-    public UsersController(IUserService userService)
+    private readonly IConfiguration _configuration;
+    private readonly JwtTokenHandler _jwtHelper;
+    public UsersController(IUserService userService, IConfiguration configuration)
     {
         _userService = userService;
+        _configuration = configuration;
+        _jwtHelper = new JwtTokenHandler(configuration);
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> GetAll()
     {
         var response = await _userService.GetAllAsync();
@@ -34,7 +40,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> GetById(Guid id)
     {
         var response = await _userService.GetByIdAsync(id);
@@ -57,6 +63,20 @@ public class UsersController : ControllerBase
         return StatusCode(response.StatusCode, response);
     }
 
+    [HttpPost("service-token")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetServiceToken([FromBody] ServiceTokenRequest request)
+    {
+        // Validate the service key
+        if (request.ServiceKey != _configuration["ServiceAuth:Key"])
+        {
+            return Unauthorized(new { message = "Invalid service key" });
+        }
+
+        var token = await _jwtHelper.GenerateServiceToken();
+        return Ok(new { token });
+    }
+
     [HttpPut("{id}")]
     [Authorize]
     public async Task<IActionResult> Update(Guid id, [FromBody] UserDto userDto)
@@ -66,7 +86,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "admin")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var response = await _userService.DeleteAsync(id);

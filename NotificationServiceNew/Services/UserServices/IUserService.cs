@@ -1,7 +1,8 @@
 ﻿using EComMSSharedLibrary.Models;
-using NotificationService.Dtos;
+using NotificationServiceNew.Dtos;
 
-namespace NotificationService.Services.UserServices
+
+namespace NotificationServiceNew.Services.UserServices
 {
     public interface IUserService
     {
